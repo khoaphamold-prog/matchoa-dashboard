@@ -125,7 +125,6 @@ with tab1:
                            title="Dòng tiền giữ lại để mở rộng Hybrid Store (Mục tiêu 105 triệu VNĐ)")
         fig_cash.add_hline(y=105000000, line_dash="dash", line_color="red", annotation_text="Mục tiêu 105M")
         st.plotly_chart(fig_cash, use_container_width=True)
-      %%writefile -a app.py
 # TAB 2: CAPEX VS OPEX
 # ---------------------------------------------------------
 with tab2:
