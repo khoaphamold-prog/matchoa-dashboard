@@ -116,15 +116,87 @@ with tab1:
         st.plotly_chart(fig_unit, use_container_width=True)
 
     with c2:
-        st.subheader("📈 Dự Phóng Dòng Tiền Tích Lũy (Mục tiêu 105Tr)")
-        months = [f"Tháng {i}" for i in range(1, 11)]
-        cumulative_cash = [net_profit * i for i in range(1, 11)]
-        df_cash = pd.DataFrame({'Tháng': months, 'Tích lũy (VNĐ)': cumulative_cash})
+      st.subheader("📈 Dự Phóng & Điều Chỉnh Dòng Tiền Tích Lũy")
 
-        fig_cash = px.line(df_cash, x='Tháng', y='Tích lũy (VNĐ)', markers=True,
-                           title="Dòng tiền giữ lại để mở rộng Hybrid Store (Mục tiêu 105 triệu VNĐ)")
-        fig_cash.add_hline(y=105000000, line_dash="dash", line_color="red", annotation_text="Mục tiêu 105M")
-        st.plotly_chart(fig_cash, use_container_width=True)
+      # 1. Khởi tạo dữ liệu mặc định dựa trên lợi nhuận tính toán từ sidebar
+      default_monthly_cash = max(0, int(net_profit))
+      months_list = [f"Tháng {i}" for i in range(1, 11)]
+
+      # Bảng dữ liệu cơ sở
+      init_df = pd.DataFrame({
+          "Tháng": months_list,
+          "Dòng tiền giữ lại (VNĐ)": [default_monthly_cash] * 10,
+      })
+
+      st.caption("👇 **Tùy chỉnh số tiền thực tế giữ lại từng tháng tại đây:**")
+
+      # 2. Tạo Bảng chỉnh sửa trực tiếp (Data Editor - tương tự Slicer/Input theo tháng)
+      edited_df = st.data_editor(
+          init_df,
+          column_config={
+              "Tháng": st.column_config.TextColumn("Tháng", disabled=True),
+              "Dòng tiền giữ lại (VNĐ)": st.column_config.NumberColumn(
+                  "Tiền giữ lại (VNĐ)", min_value=0, step=500000, format="%d VNĐ"
+              ),
+          },
+          hide_index=True,
+          use_container_width=True,
+          key="cashflow_editor",
+      )
+
+      # 3. Tính dòng tiền tích lũy lũy kế (Cumulative Sum)
+      edited_df["Tích lũy (VNĐ)"] = edited_df["Dòng tiền giữ lại (VNĐ)"].cumsum()
+
+      # 4. Vẽ biểu đồ dòng tiền tích lũy thực tế
+      fig_cash = px.line(
+          edited_df,
+          x="Tháng",
+          y="Tích lũy (VNĐ)",
+          markers=True,
+          text="Tích lũy (VNĐ)",
+          title=(
+              "Dòng tiền tích lũy thực tế theo tháng (Mục tiêu: 105 triệu VNĐ)"
+          ),
+      )
+
+      fig_cash.update_traces(
+          line_color=COLOR_MATCHA,
+          marker=dict(size=8, color=COLOR_PINK),
+          textposition="top left",
+          texttemplate="%{y:,.0f}",
+      )
+
+      # Vạch đích mục tiêu 105Tr
+      fig_cash.add_hline(
+          y=105000000,
+          line_dash="dash",
+          line_color=COLOR_PINK,
+          annotation_text="🎯 Mục tiêu 105M",
+          annotation_position="bottom right",
+      )
+
+      fig_cash.update_layout(
+          paper_bgcolor="rgba(0,0,0,0)",
+          plot_bgcolor="rgba(0,0,0,0)",
+          yaxis=dict(title="Tổng tiền tích lũy (VNĐ)"),
+      )
+
+      st.plotly_chart(fig_cash, use_container_width=True)
+
+      # 5. Thông báo tổng kết mục tiêu
+      total_accumulated = edited_df["Tích lũy (VNĐ)"].iloc[-1]
+      if total_accumulated >= 105000000:
+        st.success(
+            f"🎉 **Đạt mục tiêu!** Tổng tích lũy sau 10 tháng:"
+            f" **{total_accumulated:,.0f} VNĐ** (Vượt"
+            f" {total_accumulated - 105000000:,.0f} VNĐ)"
+        )
+      else:
+        st.warning(
+            f"⚠️ **Chưa đạt mục tiêu!** Tổng tích lũy mới đạt:"
+            f" **{total_accumulated:,.0f} VNĐ** (Còn thiếu"
+            f" {105000000 - total_accumulated:,.0f} VNĐ để đủ 105M)"
+        )
 # TAB 2: CAPEX VS OPEX
 # ---------------------------------------------------------
 with tab2:
