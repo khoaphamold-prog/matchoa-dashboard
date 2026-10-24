@@ -18,7 +18,6 @@ st.markdown(
     [data-testid="stSidebar"] { background-color: #F3F8F2; border-right: 2px solid #E8F0E6; }
     h1, h2, h3, h4 { color: #1B4D3E !important; font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; }
     
-    /* Style cho Metric Cards */
     div[data-testid="metric-container"] {
         background-color: #FFF0F5;
         border: 1px solid #FFC0CB;
@@ -28,7 +27,6 @@ st.markdown(
     }
     [data-testid="stMetricValue"] { color: #D81B60 !important; font-weight: bold; }
     
-    /* Tabs styling */
     button[data-baseweb="tab"] { color: #1B4D3E !important; font-weight: 600; }
     button[data-baseweb="tab"][aria-selected="true"] {
         background-color: #4A7C59 !important;
@@ -40,38 +38,45 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Màu sắc đồ thị Plotly
+# COLOR PALETTE
 COLOR_MATCHA = '#1B4D3E'
 COLOR_SAGE = '#4A7C59'
 COLOR_PINK = '#FF69B4'
 COLOR_LIGHT_PINK = '#FFC0CB'
 
 # HEADER
-st.title("🍵 MÁTCHOA — DASHBOARD QUẢN LÝ CHUỖI & TÀI CHÍNH (2026–2030)")
+st.title("🍵 MÁTCHOA — DASHBOARD QUẢN LÝ CHUỖI & TÀI CHÍNH")
 st.caption(
-    "Dự án Khởi nghiệp Matcha Online Cloud Kitchen & Hybrid Store | PK-"
-    " Team Analytic - UEH Strategic Management"
+    "Dự án Khởi nghiệp Matcha Online Cloud Kitchen & Hybrid Store | PK- Team"
+    " Analytic - UEH Strategic Management"
 )
 st.markdown("---")
 
-# 3. SIDEBAR - CẤU HÌNH & KỊCH BẢN
-st.sidebar.header("⚙️ Cấu Hình Kịch Bản Vận Hành")
+# 3. SIDEBAR - CẤU HÌNH CÁC BIẾN TÀI CHÍNH BÁM SÁT BÁO CÁO
+st.sidebar.header("⚙️ Cấu Hình Chi Phí & Doanh Thu")
 
-# Quick Scenario Buttons
 scenario = st.sidebar.radio(
-    "Chọn kịch bản nhanh:",
-    ["Tùy chỉnh", "Cơ sở (750 ly)", "Tăng trưởng (1,200 ly)", "Bão giá (+20% COGS)"],
+    "Chọn kịch bản kịch bản mẫu:",
+    ["Cơ sở (750 ly)", "Tăng trưởng (1,000 ly)", "Thấp (350 ly)", "Bão giá (+20% COGS)"],
 )
 
 if scenario == "Cơ sở (750 ly)":
-  def_vol, def_aov, def_cogs, def_app, def_fc = 750, 35000, 10550, 25.0, 1500000
-elif scenario == "Tăng trưởng (1,200 ly)":
-  def_vol, def_aov, def_cogs, def_app, def_fc = 1200, 38000, 10550, 22.0, 2000000
+  def_vol, def_aov, def_cogs, def_app = 750, 35000, 10550, 25.0
+  def_util, def_lab = 500000, 1000000
+elif scenario == "Tăng trưởng (1,000 ly)":
+  def_vol, def_aov, def_cogs, def_app = 1000, 35000, 10550, 25.0
+  def_util, def_lab = 700000, 1200000
+elif scenario == "Thấp (350 ly)":
+  def_vol, def_aov, def_cogs, def_app = 350, 35000, 10550, 25.0
+  def_util, def_lab = 300000, 500000
 elif scenario == "Bão giá (+20% COGS)":
-  def_vol, def_aov, def_cogs, def_app, def_fc = 750, 35000, 12660, 25.0, 1500000
+  def_vol, def_aov, def_cogs, def_app = 750, 34000, 12660, 25.0
+  def_util, def_lab = 500000, 1000000
 else:
-  def_vol, def_aov, def_cogs, def_app, def_fc = 750, 35000, 10550, 25.0, 1500000
+  def_vol, def_aov, def_cogs, def_app = 750, 35000, 10550, 25.0
+  def_util, def_lab = 500000, 1000000
 
+st.sidebar.subheader("📌 1. Doanh thu & Chi phí biến đổi (Per Unit)")
 volume_monthly = st.sidebar.slider(
     "Sản lượng bán (ly/tháng)",
     min_value=100,
@@ -83,11 +88,11 @@ aov = st.sidebar.number_input(
     "Giá bán trung bình (AOV - VNĐ/ly)", value=def_aov, step=1000
 )
 cogs = st.sidebar.number_input(
-    "Giá vốn hàng bán (COGS - VNĐ/ly)", value=def_cogs, step=250
+    "Giá vốn nguyên liệu (COGS - VNĐ/ly)", value=def_cogs, step=250
 )
 app_fee_pct = (
     st.sidebar.slider(
-        "Phí sàn giao hàng (%)",
+        "Phí chiết khấu sàn (%/đơn)",
         min_value=0.0,
         max_value=30.0,
         value=def_app,
@@ -95,11 +100,19 @@ app_fee_pct = (
     )
     / 100
 )
-fixed_cost = st.sidebar.number_input(
-    "Định phí vận hành (VNĐ/tháng)", value=def_fc, step=100000
+
+st.sidebar.subheader("📌 2. Định phí hàng tháng (Fixed Costs tại nhà)")
+cost_util = st.sidebar.number_input(
+    "Điện, nước, wifi tăng thêm (VNĐ)", value=def_util, step=50000
+)
+cost_lab = st.sidebar.number_input(
+    "Tiền công linh hoạt (VNĐ)", value=def_lab, step=100000
 )
 
-# TÍNH TOÁN UNIT ECONOMICS
+# TỔNG ĐỊNH PHÍ
+fixed_cost = cost_util + cost_lab
+
+# TÍNH TOÁN UNIT ECONOMICS THEO BÁO CÁO (MỤC 3.7.1)
 rev_per_unit = aov
 cogs_per_unit = cogs
 app_fee_per_unit = aov * app_fee_pct
@@ -107,22 +120,26 @@ cm_per_unit = rev_per_unit - cogs_per_unit - app_fee_per_unit
 cm_margin = (cm_per_unit / rev_per_unit) * 100 if rev_per_unit > 0 else 0
 
 total_rev = volume_monthly * rev_per_unit
+total_cogs = volume_monthly * cogs_per_unit
+total_app_fee = volume_monthly * app_fee_per_unit
 total_cm = volume_monthly * cm_per_unit
+
 net_profit = total_cm - fixed_cost
 net_margin = (net_profit / total_rev) * 100 if total_rev > 0 else 0
 be_volume = int(fixed_cost / cm_per_unit) if cm_per_unit > 0 else 0
 
 # TABS
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 Tài Chính & Unit Economics",
     "⚖️ CAPEX vs OPEX & Mô Hình",
     "🍵 Menu & R&D Trend",
     "🎯 OKRs & BSC KPIs",
-    "🗺️ Lộ Trình 12 Tháng",
+    "🗺️ Lộ Trình Thực Thi",
+    "💡 Tổng Kết & Khuyến Nghị CEO",
 ])
 
 # ==========================================
-# TAB 1: TÀI CHÍNH & SENSITIVITY ANALYSIS
+# TAB 1: TÀI CHÍNH & DÒNG TIỀN (SÁT BÁO CÁO MỤC 3.7.1)
 # ==========================================
 with tab1:
   st.subheader("📌 Chỉ Số Tài Chính Cốt Lõi (Kịch Bản Đang Chọn)")
@@ -130,7 +147,7 @@ with tab1:
   col1, col2, col3, col4 = st.columns(4)
   col1.metric("Doanh thu tháng", f"{total_rev:,.0f} VNĐ")
   col2.metric(
-      "Lợi nhuận ròng",
+      "Lợi nhuận ròng tháng",
       f"{net_profit:,.0f} VNĐ",
       delta=f"{net_margin:.1f}% Margin",
   )
@@ -140,20 +157,44 @@ with tab1:
   col4.metric(
       "Sản lượng hòa vốn",
       f"{be_volume} ly/tháng",
-      delta="~3 ly/ngày (An toàn)",
+      delta=f"~{int(be_volume/30)} ly/ngày",
       delta_color="inverse",
   )
 
   st.markdown("---")
 
+  # THÔNG BÁO DỰA TRÊN SỨC KHỎE TÀI CHÍNH
+  if net_profit >= 10000000:
+    st.success(
+        f"✅ **SỨC KHỎE TÀI CHÍNH RẤT TỐT (KỊCH BẢN CHUẨN BÁO CÁO)!**\n\n"
+        f"Mô hình đạt lợi nhuận ròng **{net_profit:,.0f} VNĐ/tháng** (Margin"
+        f" **{net_margin:.1f}%**). Dự án sẽ hoàn thành tích lũy 105 triệu VNĐ"
+        f" trong khoảng **{105000000/net_profit:.1f} tháng** để giải ngân mở"
+        " Hybrid Store."
+    )
+  elif net_profit > 0:
+    st.warning(
+        f"⚠️ **SỨC KHỎE TÀI CHÍNH TRUNG BÌNH!**\n\nLợi nhuận ròng đạt"
+        f" **{net_profit:,.0f} VNĐ/tháng**. Thời gian tích lũy đủ 105 triệu VNĐ"
+        f" kéo dài lên **{105000000/net_profit:.1f} tháng**. Cần đẩy mạnh kênh"
+        " Zalo DTC để cắt chiết khấu sàn 25%."
+    )
+  else:
+    st.error(
+        "🚨 **CẢNH BÁO: KỊCH BẢN ĐANG LỖ!** Cần điều chỉnh lại giá bán hoặc"
+        " khóa giá trần bột MK4."
+    )
+
+  st.markdown("---")
+
   c1, c2 = st.columns(2)
   with c1:
-    st.subheader("📊 Cơ Cấu Chi Phí & Lợi Nhuận Cho 1 Ly")
+    st.subheader("📊 Cơ Cấu Chi Phí & Lợi Nhuận Cho 1 Ly (AOV = 35k)")
     df_unit = pd.DataFrame({
         "Hạng mục": [
-            "Giá vốn (COGS)",
-            "Phí sàn (App Fee)",
-            "Lãi đóng góp (CM)",
+            "Giá vốn (COGS 30.1%)",
+            "Phí sàn (App 25.0%)",
+            "Lãi đóng góp (CM 44.9%)",
         ],
         "Số tiền": [cogs_per_unit, app_fee_per_unit, cm_per_unit],
     })
@@ -167,7 +208,7 @@ with tab1:
     st.plotly_chart(fig_unit, use_container_width=True)
 
   with c2:
-    st.subheader("📈 Dự Phóng Dòng Tiền Tích Lũy (Mục tiêu: 105M)")
+    st.subheader("📈 Dự Phóng Tích Lũy Dòng Tiền (Mục tiêu 105 Triệu VNĐ)")
     default_monthly_cash = max(0, int(net_profit))
     months_list = [f"Tháng {i}" for i in range(1, 11)]
 
@@ -211,12 +252,12 @@ with tab1:
         y=105000000,
         line_dash="dash",
         line_color=COLOR_PINK,
-        annotation_text="🎯 Mục tiêu 105M mở Hybrid Store",
+        annotation_text="🎯 Mục tiêu 105M (Mục 3.7.4)",
     )
     st.plotly_chart(fig_cash, use_container_width=True)
 
 # ==========================================
-# TAB 2: CAPEX VS OPEX & COMPARISON
+# TAB 2: CAPEX VS OPEX (SÁT BÁO CÁO MỤC 3.7.2 & 3.7.3)
 # ==========================================
 with tab2:
   st.subheader(
@@ -225,14 +266,14 @@ with tab2:
 
   col_comp1, col_comp2 = st.columns(2)
   with col_comp1:
-    st.markdown("### 🛠️ So Sánh Vốn Đầu Tư Ban Đầu (CAPEX)")
+    st.markdown("### 🛠️ Vốn Đầu Tư Ban Đầu (CAPEX - Mục 3.7.2)")
     df_capex = pd.DataFrame({
         "Hạng mục đầu tư": [
             "Cọc & Thuê mặt bằng",
-            "Decor & Bàn ghế",
-            "Thiết bị pha chế",
-            "Dụng cụ & Pháp lý",
-            "TỔNG CAPEX",
+            "Decor thương hiệu & Bàn ghế",
+            "Thiết bị pha chế & bảo quản",
+            "Dụng cụ, bao bì, pháp lý",
+            "TỔNG CAPEX BAN ĐẦU",
         ],
         "Mátchoa Tại Nhà": [
             "0 VNĐ",
@@ -259,20 +300,22 @@ with tab2:
     st.table(df_capex)
 
   with col_comp2:
-    st.markdown("### 💸 So Sánh Vận Hành & Điểm Hòa Vốn (OPEX)")
+    st.markdown("### 💸 Định Phí & Điểm Hòa Vốn (OPEX - Mục 3.7.3)")
     df_opex_comp = pd.DataFrame({
         "Chỉ tiêu hàng tháng": [
-            "Tiền thuê nhà cố định",
-            "Điện, Nước, Wifi",
-            "Chi phí nhân sự",
+            "Tiền thuê mặt bằng cố định",
+            "Điện, Nước, Wifi (tăng thêm)",
+            "Nhân sự / Công chủ quán",
             "Tổng Định Phí (Fixed Cost)",
-            "Sản Lượng Hòa Vốn",
+            "Lãi đóng góp / ly (CM)",
+            "Sản Lượng Hòa Vốn (Ly/tháng)",
         ],
         "Cloud Kitchen Tại Nhà": [
             "0 VNĐ",
             "500.000 VNĐ",
             "1.000.000 VNĐ",
             "1.500.000 VNĐ",
+            "15.700 VNĐ (chịu phí sàn)",
             "96 ly/tháng (~3 ly/ngày)",
         ],
         "Cửa Hàng Truyền Thống": [
@@ -280,157 +323,227 @@ with tab2:
             "2.500.000 VNĐ",
             "6.000.000 VNĐ",
             "18.500.000 VNĐ",
-            "1.178 ly/tháng (~39 ly/ngày)",
+            "24.450 VNĐ (không phí sàn)",
+            "757 ly/tháng (~25 ly/ngày)",
         ],
     })
     st.table(df_opex_comp)
 
   st.info(
-      "💡 **Kết luận chiến lược:** Mô hình Cloud Kitchen tại nhà giúp tiết kiệm"
-      " 88,9% vốn ban đầu và an toàn hòa vốn gấp 12 lần so với mặt bằng truyền"
-      " thống."
+      "💡 **Kết luận từ Báo cáo:** Tận dụng nhà ở giúp tiết kiệm 88,9% CAPEX"
+      " và có sản lượng hòa vốn an toàn hơn gấp 8 lần (96 ly so với 757"
+      " ly/tháng) so với việc thuê cửa hàng truyền thống ngay từ đầu."
   )
 
 # ==========================================
-# TAB 3: MENU & R&D TREND ANALYTICS
+# TAB 3: MENU & R&D TREND ANALYTICS (MỤC 3.5 & 3.6.1)
 # ==========================================
 with tab3:
-  st.subheader("🍵 Quản Lý Menu & Chiến Lược R&D Sản Phẩm Trend")
+  st.subheader("🍵 Quản Lý Menu & Quy Trình R&D 3 Bước")
 
   st.markdown("""
-    Dự án Mátchoa áp dụng **Quy trình R&D 3 Bước**: 
-    1. *Thử nghiệm hương vị (Sensory test)* ➡️ 2. *Tính COGS & Biên lợi nhuận* ➡️ 3. *Khảo sát phản hồi khách hàng*.
+    **Quy trình R&D Cổng Quyết Định (Mục 3.5 Báo cáo):**
+    Ý tưởng ➡️ Thử nghiệm nội bộ ➡️ Bán thử giới hạn & Tính COGS $\le 30\%$ ➡️ Đo lường phản hồi khách hàng.
     """)
 
-  # Menu Data
   menu_data = pd.DataFrame({
       "Tên món": [
-          "Matcha Latte",
-          "Matcha Dừa (Hot Trend)",
-          "Matcha Dâu",
-          "Matcha Xoài",
-          "Cà Phê Kem Muối",
+          "Matcha Latte (Lõi)",
+          "Matcha Dừa (Best Seller)",
+          "Matcha Dâu (Fusion)",
+          "Matcha Xoài (Fusion)",
+          "Pudding Chuối (Món kèm)",
       ],
       "Phân loại": [
-          "Cốt lõi (Core)",
-          "Bắt trend (Fusion)",
-          "Bắt trend (Fusion)",
-          "Bắt trend (Fusion)",
-          "Mở rộng (Coffee)",
+          "Menu Lõi",
+          "Món theo mùa / Trend",
+          "Món theo mùa / Trend",
+          "Món theo mùa / Trend",
+          "Món ăn kèm Combo",
       ],
-      "Giá bán lẻ (VNĐ)": [35000, 39000, 39000, 39000, 29000],
-      "Giá vốn COGS (VNĐ)": [10500, 11500, 12000, 11800, 8500],
-      "Tỷ lệ COGS (%)": [30.0, 29.5, 30.8, 30.3, 29.3],
-      "Trạng thái R&D": [
-          "Menu Chính",
-          "Menu Chính (Best Seller)",
-          "Menu Chính",
-          "Menu Chính",
-          "Menu Phụ",
+      "Giá bán lẻ (VNĐ)": [35000, 39000, 39000, 39000, 20000],
+      "Giá vốn COGS (VNĐ)": [10500, 11500, 12000, 11800, 5500],
+      "Tỷ lệ COGS (%)": [30.0, 29.5, 30.8, 30.3, 27.5],
+      "Trạng thái SOP": [
+          "Đã có Recipe Sheet",
+          "Đã có Recipe Sheet",
+          "Đã có Recipe Sheet",
+          "Đã có Recipe Sheet",
+          "Đã có Recipe Sheet",
       ],
   })
 
   st.dataframe(menu_data, use_container_width=True)
 
-  # Chart Margin
   fig_menu = px.bar(
       menu_data,
       x="Tên món",
       y=["Giá vốn COGS (VNĐ)", "Giá bán lẻ (VNĐ)"],
       barmode="group",
-      title="So Sánh Giá Bán & Giá Vốn Các Món Trong Menu",
+      title="So Sánh Giá Bán & COGS Định Mức Cho Từng Món",
       color_discrete_sequence=[COLOR_LIGHT_PINK, COLOR_MATCHA],
   )
   st.plotly_chart(fig_menu, use_container_width=True)
 
 # ==========================================
-# TAB 4: OKRs & BSC KPIS
+# TAB 4: OKRS & BSC KPIS (MỤC 4.1 & 4.2 BÁO CÁO)
 # ==========================================
 with tab4:
-  st.subheader("🎯 Quản Trị Mục Tiêu OKRs & Bản Đồ KPI (Balanced Scorecard)")
+  st.subheader("🎯 Hệ Thống OKRs & Bản Đồ KPI Balanced Scorecard")
 
-  st.markdown("### 📌 Bộ Mục Tiêu & Kết Quả Cốt Lõi (OKRs)")
+  st.markdown("### 📌 Mục Tiêu & Kết Quả Cốt Lõi (OKRs - Mục 4.1)")
   with st.expander(
-      "O1: Tối ưu hiệu quả vận hành & Sức khỏe tài chính Cloud Kitchen",
+      "O1 (Ngắn hạn 0–3 tháng): Hoàn thiện menu chuẩn hóa & Khóa chi phí đầu"
+      " vào",
       expanded=True,
   ):
-    st.progress(0.85, text="KR1.1: Tích lũy dòng tiền đạt mục tiêu 105M (85%)")
-    st.progress(0.95, text="KR1.2: Tỷ suất lợi nhuận ròng >= 37.8% (95%)")
-    st.progress(0.90, text="KR1.3: Tỷ lệ hao hụt nguyên liệu < 2.0% (90%)")
+    st.progress(
+        1.00, text="KR1: Chốt menu chính thức lõi/mùa/kèm & loại món lỗi (100%)"
+    )
+    st.progress(
+        0.90, text="KR2: 100% món có Recipe Sheet (gram/ml) & COGS <30% (90%)"
+    )
+    st.progress(
+        0.80, text="KR3: Ký hợp đồng bao tiêu MK4 giá trần 6-12 tháng (80%)"
+    )
+    st.progress(
+        1.00, text="KR4: 100% ly giao đi có dán mã QR Zalo Mini-App (100%)"
+    )
 
-  with st.expander("O2: Trải nghiệm khách hàng & Phát triển kênh Zalo DTC"):
-    st.progress(1.00, text="KR2.1: Rating ứng dụng đạt 5.0 / 5.0 sao (100%)")
-    st.progress(0.60, text="KR2.2: Đơn hàng qua Zalo Mini-App đạt 15% (60%)")
+  with st.expander(
+      "O2 (Trung hạn 3–12 tháng): Chuẩn hóa thương hiệu & Phát triển kênh riêng"
+      " Zalo DTC"
+  ):
+    st.progress(
+        0.60, text="KR2: Đạt 15% tổng lượng đơn hàng qua kênh riêng Zalo (60%)"
+    )
+    st.progress(0.95, text="KR3: Duy trì Rating app >= 4.8 sao (95%)")
+    st.progress(
+        0.70, text="KR4: Nâng AOV từ 35k lên 55k nhờ combo Bữa trưa/Đôi (70%)"
+    )
 
   st.markdown("---")
-  st.markdown("### 📊 Bản Đồ Đo Lường BSC KPIs")
+  st.markdown("### 📊 Bản Đồ Bảng Cân Bằng Chỉ Số (BSC KPIs - Mục 4.2)")
   bsc_df = pd.DataFrame([
       {
           "Viễn cảnh": "💰 Tài chính",
-          "KPI cốt lõi": "Tích lũy dòng tiền ròng",
-          "Mục tiêu": ">= 10tr/tháng",
+          "KPI cốt lõi": "Lợi nhuận giữ lại / tháng",
+          "Mục tiêu": "~10.000.000 VNĐ",
           "Tần suất": "Hàng tháng",
+          "Phụ trách": "Tài chính",
       },
       {
           "Viễn cảnh": "👥 Khách hàng",
-          "KPI cốt lõi": "Rating App giao hàng",
-          "Mục tiêu": "5.0 / 5.0 sao",
+          "KPI cốt lõi": "Rating trung bình sàn",
+          "Mục tiêu": "5.0 (Tối thiểu 4.8)",
           "Tần suất": "Hàng tuần",
+          "Phụ trách": "Marketing",
+      },
+      {
+          "Viễn cảnh": "👥 Khách hàng",
+          "KPI cốt lõi": "Tỷ lệ đơn qua kênh Zalo DTC",
+          "Mục tiêu": "15% tổng lượng đơn",
+          "Tần suất": "Hàng tháng",
+          "Phụ trách": "Marketing",
       },
       {
           "Viễn cảnh": "⚙️ Vận hành",
-          "KPI cốt lõi": "Thời gian pha chế/ly",
-          "Mục tiêu": "< 90 giây/ly",
-          "Tần suất": "Hàng ngày",
+          "KPI cốt lõi": "Thời gian pha chế chuẩn",
+          "Mục tiêu": "< 90 giây / ly",
+          "Tần suất": "Hàng tuần",
+          "Phụ trách": "Vận hành",
       },
       {
           "Viễn cảnh": "🌱 Học hỏi",
-          "KPI cốt lõi": "Nhân sự đạt chuẩn SOP",
+          "KPI cốt lõi": "Nhân sự nắm vững SOP",
           "Mục tiêu": "100% nhân sự",
           "Tần suất": "Hàng quý",
+          "Phụ trách": "Vận hành",
       },
   ])
   st.table(bsc_df)
 
 # ==========================================
-# TAB 5: LỘ TRÌNH 12 THÁNG
+# TAB 5: LỘ TRÌNH THỰC THI WORKING PLAN (MỤC 4.2 BÁO CÁO)
 # ==========================================
 with tab5:
-  st.subheader("🗺️ Lộ Trình Triển Khai Chiến Lược 12 Tháng (2026)")
+  st.subheader("🗺️ Lộ Trình Thực Thi Working Plan Theo Báo Cáo")
 
   timeline_events = [
       {
-          "Giai đoạn": "Quý 1 (Tháng 1-3)",
-          "Trọng tâm": "Chuẩn hóa & Kênh DTC",
-          "Chi tiết hành động": (
-              "• Setup gian hàng Grab/ShopeeFood\n• Dán QR Zalo Loyalty trên"
-              " 100% ly\n• Chuẩn hóa văn bản SOP pha chế dưới 90s"
+          "Giai đoạn": "1. Hoàn thiện Menu & SOP",
+          "Thời gian": "Tháng 1–3",
+          "Công việc chính (Mục 4.2)": (
+              "Chốt menu; viết Recipe Sheet (gram/ml) & tính COGS; ký hợp đồng"
+              " MK4 giá trần; dán mã QR Zalo 100% ly; cơ giới hóa máy đánh"
+              " trà tự động."
+          ),
+          "Sản phẩm đầu ra": "Menu chính thức, Bộ văn bản SOP, Hợp đồng MK4",
+      },
+      {
+          "Giai đoạn": "2. Thương hiệu & Kênh riêng",
+          "Thời gian": "Tháng 4–9",
+          "Công việc chính (Mục 4.2)": (
+              "Hoàn thiện bộ nhận diện; chạy quảng cáo từ khóa; vận hành Zalo"
+              " Mini-App đạt 15% đơn; ra mắt combo Bữa trưa/Đôi nâng AOV lên"
+              " 55k."
+          ),
+          "Sản phẩm đầu ra": (
+              "Bộ hướng dẫn thương hiệu, 15% đơn qua Zalo, Tích lũy 10M/tháng"
           ),
       },
       {
-          "Giai đoạn": "Quý 2 (Tháng 4-6)",
-          "Trọng tâm": "Tăng trưởng & Tối ưu AOV",
-          "Chi tiết hành động": (
-              "• Chạy quảng cáo từ khóa 'Matcha chuẩn Nhật'\n• Ra mắt combo Bữa"
-              " trưa/Cặp đôi (AOV 55k-70k)\n• Ký bao tiêu bột MK4 6-12 tháng"
+          "Giai đoạn": "3. Tích lũy & Chuẩn bị cửa hàng",
+          "Thời gian": "Tháng 10–12",
+          "Công việc chính (Mục 4.2)": (
+              "Đánh giá rà soát 7 nhóm điều kiện mục 3.2.1; xác nhận thủ tục"
+              " pháp lý địa điểm; chạy thử điểm Pickup; lấy báo giá cải tạo."
           ),
+          "Sản phẩm đầu ra": "Hồ sơ quyết định giải ngân 105 triệu VNĐ",
       },
       {
-          "Giai đoạn": "Quý 3 (Tháng 7-9)",
-          "Trọng tâm": "Tích lũy & Chuẩn bị Offline",
-          "Chi tiết hành động": (
-              "• Đạt mốc tích lũy 105 triệu VNĐ\n• Khảo sát & chốt báo giá thiết"
-              " bị cải tạo tầng trệt tại nhà thành Hybrid Store"
+          "Giai đoạn": "4. Mở cửa hàng Hybrid",
+          "Thời gian": "Tháng 12–36",
+          "Công việc chính (Mục 4.2)": (
+              "Giải ngân 105M tự có; thi công cải tạo tầng trệt tại nhà;"
+              " lắp thiết bị công nghiệp; khai trương cửa hàng Hybrid đầu"
+              " tiên."
           ),
-      },
-      {
-          "Giai đoạn": "Quý 4 (Tháng 10-12)",
-          "Trọng tâm": "Khai trương Hybrid Store",
-          "Chi tiết hành động": (
-              "• Thi công cải tạo quầy Pickup & Seating Mini\n• Khai trương"
-              " cửa hàng Hybrid kết hợp trải nghiệm tại chỗ & Online"
-          ),
+          "Sản phẩm đầu ra": "Cửa hàng Hybrid Store chuẩn vận hành",
       },
   ]
   st.table(pd.DataFrame(timeline_events))
+
+# ==========================================
+# TAB 6: TỔNG KẾT & ĐỀ XUẤT (MỤC V BÁO CÁO)
+# ==========================================
+with tab6:
+  st.subheader("💡 Tổng Kết Chiến Lược & Đề Xuất Cho CEO Mátchoa")
+
+  c_rec1, c_rec2 = st.columns(2)
+
+  with c_rec1:
+    st.markdown("### 📌 3 Hành Động Ưu Tiên Hàng Đầu (Mục 5.2 Báo cáo)")
+    st.markdown("""
+        1. **Ưu tiên Ngắn hạn (0–3 tháng):**
+           * *Hành động:* Hoàn thiện menu chính thức, chuẩn hóa công thức bằng văn bản Recipe Sheet/SOP và khóa chi phí đầu vào bằng hợp đồng giá trần MK4 (ST1).
+        2. **Ưu tiên Trung hạn (3–12 tháng):**
+           * *Hành động:* Chuẩn hóa bộ nhận diện thương hiệu và chuyển đổi 15% lượng đơn qua kênh Zalo Mini-App (WO1) để tiết kiệm 20–30% phí sàn.
+        3. **Năng lực cạnh tranh cốt lõi:**
+           * *Hành động:* Biến quan hệ độc quyền MK4 thành lợi thế nhìn thấy bằng cách kể câu chuyện nguồn gốc ở mọi điểm chạm (bao bì, video TikTok/Reels).
+        """)
+
+  with c_rec2:
+    st.markdown("### 🎯 Khuyến Nghị Dài Hạn & Điều Kiện Giải Ngân")
+    st.markdown("""
+        * **Kỷ luật giải ngân mở cửa hàng:** Chỉ mở cửa hàng vật lý Hybrid Store khi đã **đạt đủ 7 nhóm điều kiện** tại Mục 3.2.1 của Báo cáo (Tài chính 105M vốn tự có, Sản lượng 770-930 ly/tháng, Rating $\ge 4.8$, 100% SOP, Hợp đồng MK4, Pháp lý & Chạy thử Pickup thành công).
+        * **Đảm bảo không nợ vay:** Tuyệt đối dùng 100% dòng tiền ròng tích lũy từ Cloud Kitchen để tự đầu tư, triệt tiêu hoàn toàn rủi ro tài chính cho nhóm sinh viên khởi nghiệp.
+        """)
+
+  st.markdown("---")
+  st.info(
+      "💡 **Thông điệp cốt lõi từ Báo cáo:** Tận dụng mô hình Cloud Kitchen tinh"
+      " gọn làm nền tảng tích lũy vốn an toàn, tạo đà mở rộng bền vững sang mô"
+      " hình Hybrid Store mà không gánh gánh nặng chi phí cố định quá sớm."
+  )
 
