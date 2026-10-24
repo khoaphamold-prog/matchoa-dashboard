@@ -49,7 +49,7 @@ COLOR_LIGHT_PINK = '#FFC0CB'
 # HEADER
 st.title("🍵 MÁTCHOA — DASHBOARD QUẢN LÝ CHUỖI & TÀI CHÍNH (2026–2030)")
 st.caption(
-    "Dự án Khởi nghiệp Matcha Online Cloud Kitchen & Hybrid Store | PKhoa-"
+    "Dự án Khởi nghiệp Matcha Online Cloud Kitchen & Hybrid Store | PK-"
     " Team Analytic - UEH Strategic Management"
 )
 st.markdown("---")
