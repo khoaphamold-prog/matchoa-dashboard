@@ -52,12 +52,19 @@ st.caption(
 )
 st.markdown("---")
 
-# 3. SIDEBAR - CẤU HÌNH CÁC BIẾN TÀI CHÍNH BÁM SÁT BÁO CÁO
+# 3. SIDEBAR - CẤU HÌNH CÓ TÙY CHỈNH FLEXIBLE
 st.sidebar.header("⚙️ Cấu Hình Chi Phí & Doanh Thu")
 
+# Thêm lại 'Tùy chỉnh' ở đầu danh sách chọn
 scenario = st.sidebar.radio(
     "Chọn kịch bản kịch bản mẫu:",
-    ["Cơ sở (750 ly)", "Tăng trưởng (1,000 ly)", "Thấp (350 ly)", "Bão giá (+20% COGS)"],
+    [
+        "Tùy chỉnh",
+        "Cơ sở (750 ly)",
+        "Tăng trưởng (1,000 ly)",
+        "Thấp (350 ly)",
+        "Bão giá (+20% COGS)",
+    ],
 )
 
 if scenario == "Cơ sở (750 ly)":
@@ -73,6 +80,7 @@ elif scenario == "Bão giá (+20% COGS)":
   def_vol, def_aov, def_cogs, def_app = 750, 34000, 12660, 25.0
   def_util, def_lab = 500000, 1000000
 else:
+  # Giá trị mặc định khi chọn "Tùy chỉnh"
   def_vol, def_aov, def_cogs, def_app = 750, 35000, 10550, 25.0
   def_util, def_lab = 500000, 1000000
 
@@ -139,7 +147,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 ])
 
 # ==========================================
-# TAB 1: TÀI CHÍNH & DÒNG TIỀN (SÁT BÁO CÁO MỤC 3.7.1)
+# TAB 1: TÀI CHÍNH & DÒNG TIỀN
 # ==========================================
 with tab1:
   st.subheader("📌 Chỉ Số Tài Chính Cốt Lõi (Kịch Bản Đang Chọn)")
@@ -163,14 +171,13 @@ with tab1:
 
   st.markdown("---")
 
-  # THÔNG BÁO DỰA TRÊN SỨC KHỎE TÀI CHÍNH
+  # THÔNG BÁO DỰA TRÊN SỨC KHỎE TÀI CHÍNH DYNAMIIC
   if net_profit >= 10000000:
     st.success(
-        f"✅ **SỨC KHỎE TÀI CHÍNH RẤT TỐT (KỊCH BẢN CHUẨN BÁO CÁO)!**\n\n"
-        f"Mô hình đạt lợi nhuận ròng **{net_profit:,.0f} VNĐ/tháng** (Margin"
-        f" **{net_margin:.1f}%**). Dự án sẽ hoàn thành tích lũy 105 triệu VNĐ"
-        f" trong khoảng **{105000000/net_profit:.1f} tháng** để giải ngân mở"
-        " Hybrid Store."
+        f"✅ **SỨC KHỎE TÀI CHÍNH RẤT TỐT!**\n\nMô hình đạt lợi nhuận ròng"
+        f" **{net_profit:,.0f} VNĐ/tháng** (Margin **{net_margin:.1f}%**). Dự"
+        f" án sẽ hoàn thành tích lũy 105 triệu VNĐ trong khoảng"
+        f" **{105000000/net_profit:.1f} tháng** để giải ngân mở Hybrid Store."
     )
   elif net_profit > 0:
     st.warning(
@@ -189,12 +196,12 @@ with tab1:
 
   c1, c2 = st.columns(2)
   with c1:
-    st.subheader("📊 Cơ Cấu Chi Phí & Lợi Nhuận Cho 1 Ly (AOV = 35k)")
+    st.subheader("📊 Cơ Cấu Chi Phí & Lợi Nhuận Cho 1 Ly")
     df_unit = pd.DataFrame({
         "Hạng mục": [
-            "Giá vốn (COGS 30.1%)",
-            "Phí sàn (App 25.0%)",
-            "Lãi đóng góp (CM 44.9%)",
+            "Giá vốn (COGS)",
+            "Phí sàn (App Fee)",
+            "Lãi đóng góp (CM)",
         ],
         "Số tiền": [cogs_per_unit, app_fee_per_unit, cm_per_unit],
     })
@@ -257,7 +264,7 @@ with tab1:
     st.plotly_chart(fig_cash, use_container_width=True)
 
 # ==========================================
-# TAB 2: CAPEX VS OPEX (SÁT BÁO CÁO MỤC 3.7.2 & 3.7.3)
+# TAB 2: CAPEX VS OPEX
 # ==========================================
 with tab2:
   st.subheader(
@@ -315,8 +322,8 @@ with tab2:
             "500.000 VNĐ",
             "1.000.000 VNĐ",
             "1.500.000 VNĐ",
-            "15.700 VNĐ (chịu phí sàn)",
-            "96 ly/tháng (~3 ly/ngày)",
+            f"{cm_per_unit:,.0f} VNĐ",
+            f"{be_volume} ly/tháng",
         ],
         "Cửa Hàng Truyền Thống": [
             "10.000.000 VNĐ",
@@ -331,21 +338,15 @@ with tab2:
 
   st.info(
       "💡 **Kết luận từ Báo cáo:** Tận dụng nhà ở giúp tiết kiệm 88,9% CAPEX"
-      " và có sản lượng hòa vốn an toàn hơn gấp 8 lần (96 ly so với 757"
-      " ly/tháng) so với việc thuê cửa hàng truyền thống ngay từ đầu."
+      " và có sản lượng hòa vốn an toàn hơn gấp nhiều lần so với việc thuê cửa"
+      " hàng truyền thống ngay từ đầu."
   )
 
 # ==========================================
-# TAB 3: MENU & R&D TREND ANALYTICS (MỤC 3.5 & 3.6.1)
+# TAB 3, 4, 5, 6 GIỮ NGUYÊN
 # ==========================================
 with tab3:
   st.subheader("🍵 Quản Lý Menu & Quy Trình R&D 3 Bước")
-
-  st.markdown("""
-    **Quy trình R&D Cổng Quyết Định (Mục 3.5 Báo cáo):**
-    Ý tưởng ➡️ Thử nghiệm nội bộ ➡️ Bán thử giới hạn & Tính COGS $\le 30\%$ ➡️ Đo lường phản hồi khách hàng.
-    """)
-
   menu_data = pd.DataFrame({
       "Tên món": [
           "Matcha Latte (Lõi)",
@@ -372,9 +373,7 @@ with tab3:
           "Đã có Recipe Sheet",
       ],
   })
-
   st.dataframe(menu_data, use_container_width=True)
-
   fig_menu = px.bar(
       menu_data,
       x="Tên món",
@@ -385,13 +384,8 @@ with tab3:
   )
   st.plotly_chart(fig_menu, use_container_width=True)
 
-# ==========================================
-# TAB 4: OKRS & BSC KPIS (MỤC 4.1 & 4.2 BÁO CÁO)
-# ==========================================
 with tab4:
   st.subheader("🎯 Hệ Thống OKRs & Bản Đồ KPI Balanced Scorecard")
-
-  st.markdown("### 📌 Mục Tiêu & Kết Quả Cốt Lõi (OKRs - Mục 4.1)")
   with st.expander(
       "O1 (Ngắn hạn 0–3 tháng): Hoàn thiện menu chuẩn hóa & Khóa chi phí đầu"
       " vào",
@@ -423,7 +417,6 @@ with tab4:
     )
 
   st.markdown("---")
-  st.markdown("### 📊 Bản Đồ Bảng Cân Bằng Chỉ Số (BSC KPIs - Mục 4.2)")
   bsc_df = pd.DataFrame([
       {
           "Viễn cảnh": "💰 Tài chính",
@@ -463,17 +456,13 @@ with tab4:
   ])
   st.table(bsc_df)
 
-# ==========================================
-# TAB 5: LỘ TRÌNH THỰC THI WORKING PLAN (MỤC 4.2 BÁO CÁO)
-# ==========================================
 with tab5:
   st.subheader("🗺️ Lộ Trình Thực Thi Working Plan Theo Báo Cáo")
-
   timeline_events = [
       {
           "Giai đoạn": "1. Hoàn thiện Menu & SOP",
           "Thời gian": "Tháng 1–3",
-          "Công việc chính (Mục 4.2)": (
+          "Công việc chính": (
               "Chốt menu; viết Recipe Sheet (gram/ml) & tính COGS; ký hợp đồng"
               " MK4 giá trần; dán mã QR Zalo 100% ly; cơ giới hóa máy đánh"
               " trà tự động."
@@ -483,7 +472,7 @@ with tab5:
       {
           "Giai đoạn": "2. Thương hiệu & Kênh riêng",
           "Thời gian": "Tháng 4–9",
-          "Công việc chính (Mục 4.2)": (
+          "Công việc chính": (
               "Hoàn thiện bộ nhận diện; chạy quảng cáo từ khóa; vận hành Zalo"
               " Mini-App đạt 15% đơn; ra mắt combo Bữa trưa/Đôi nâng AOV lên"
               " 55k."
@@ -495,7 +484,7 @@ with tab5:
       {
           "Giai đoạn": "3. Tích lũy & Chuẩn bị cửa hàng",
           "Thời gian": "Tháng 10–12",
-          "Công việc chính (Mục 4.2)": (
+          "Công việc chính": (
               "Đánh giá rà soát 7 nhóm điều kiện mục 3.2.1; xác nhận thủ tục"
               " pháp lý địa điểm; chạy thử điểm Pickup; lấy báo giá cải tạo."
           ),
@@ -504,7 +493,7 @@ with tab5:
       {
           "Giai đoạn": "4. Mở cửa hàng Hybrid",
           "Thời gian": "Tháng 12–36",
-          "Công việc chính (Mục 4.2)": (
+          "Công việc chính": (
               "Giải ngân 105M tự có; thi công cải tạo tầng trệt tại nhà;"
               " lắp thiết bị công nghiệp; khai trương cửa hàng Hybrid đầu"
               " tiên."
@@ -514,36 +503,26 @@ with tab5:
   ]
   st.table(pd.DataFrame(timeline_events))
 
-# ==========================================
-# TAB 6: TỔNG KẾT & ĐỀ XUẤT (MỤC V BÁO CÁO)
-# ==========================================
 with tab6:
   st.subheader("💡 Tổng Kết Chiến Lược & Đề Xuất Cho CEO Mátchoa")
-
   c_rec1, c_rec2 = st.columns(2)
-
   with c_rec1:
     st.markdown("### 📌 3 Hành Động Ưu Tiên Hàng Đầu (Mục 5.2 Báo cáo)")
     st.markdown("""
-        1. **Ưu tiên Ngắn hạn (0–3 tháng):**
-           * *Hành động:* Hoàn thiện menu chính thức, chuẩn hóa công thức bằng văn bản Recipe Sheet/SOP và khóa chi phí đầu vào bằng hợp đồng giá trần MK4 (ST1).
-        2. **Ưu tiên Trung hạn (3–12 tháng):**
-           * *Hành động:* Chuẩn hóa bộ nhận diện thương hiệu và chuyển đổi 15% lượng đơn qua kênh Zalo Mini-App (WO1) để tiết kiệm 20–30% phí sàn.
-        3. **Năng lực cạnh tranh cốt lõi:**
-           * *Hành động:* Biến quan hệ độc quyền MK4 thành lợi thế nhìn thấy bằng cách kể câu chuyện nguồn gốc ở mọi điểm chạm (bao bì, video TikTok/Reels).
+        1. **Ưu tiên Ngắn hạn (0–3 tháng):** Hoàn thiện menu chính thức, chuẩn hóa công thức bằng văn bản Recipe Sheet/SOP và khóa chi phí đầu vào bằng hợp đồng giá trần MK4 (ST1).
+        2. **Ưu tiên Trung hạn (3–12 tháng):** Chuẩn hóa bộ nhận diện thương hiệu và chuyển đổi 15% lượng đơn qua kênh Zalo Mini-App (WO1) để tiết kiệm 20–30% phí sàn.
+        3. **Năng lực cạnh tranh cốt lõi:** Biến quan hệ độc quyền MK4 thành lợi thế nhìn thấy bằng cách kể câu chuyện nguồn gốc ở mọi điểm chạm.
         """)
-
   with c_rec2:
     st.markdown("### 🎯 Khuyến Nghị Dài Hạn & Điều Kiện Giải Ngân")
     st.markdown("""
-        * **Kỷ luật giải ngân mở cửa hàng:** Chỉ mở cửa hàng vật lý Hybrid Store khi đã **đạt đủ 7 nhóm điều kiện** tại Mục 3.2.1 của Báo cáo (Tài chính 105M vốn tự có, Sản lượng 770-930 ly/tháng, Rating $\ge 4.8$, 100% SOP, Hợp đồng MK4, Pháp lý & Chạy thử Pickup thành công).
-        * **Đảm bảo không nợ vay:** Tuyệt đối dùng 100% dòng tiền ròng tích lũy từ Cloud Kitchen để tự đầu tư, triệt tiêu hoàn toàn rủi ro tài chính cho nhóm sinh viên khởi nghiệp.
+        * **Kỷ luật giải ngân mở cửa hàng:** Chỉ mở cửa hàng vật lý Hybrid Store khi đã **đạt đủ 7 nhóm điều kiện** tại Mục 3.2.1 của Báo cáo.
+        * **Đảm bảo không nợ vay:** Tuyệt đối dùng 100% dòng tiền ròng tích lũy từ Cloud Kitchen để tự đầu tư, triệt tiêu hoàn toàn rủi ro tài chính.
         """)
-
   st.markdown("---")
   st.info(
-      "💡 **Thông điệp cốt lõi từ Báo cáo:** Tận dụng mô hình Cloud Kitchen tinh"
-      " gọn làm nền tảng tích lũy vốn an toàn, tạo đà mở rộng bền vững sang mô"
-      " hình Hybrid Store mà không gánh gánh nặng chi phí cố định quá sớm."
+      "💡 **Thông điệp cốt lõi:** Tận dụng mô hình Cloud Kitchen tinh gọn làm"
+      " nền tảng tích lũy vốn an toàn, tạo đà mở rộng bền vững sang mô hình"
+      " Hybrid Store mà không gánh chi phí cố định quá sớm."
   )
 
